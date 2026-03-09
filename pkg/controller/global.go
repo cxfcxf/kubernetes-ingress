@@ -82,7 +82,12 @@ func (c *HAProxyController) globalCfg() {
 	}
 
 	env.SetGlobal(newGlobal, &newLg, c.haproxy.Env)
-	diff := newGlobal.Diff(*global)
+	// bandaid fix for https://github.com/haproxytech/kubernetes-ingress/issues/783
+	// the fix is trying to cause minimal disruption to the existing behavior
+	globalForDiff := *newGlobal
+	globalForDiff.LogTargetList = nil
+	global.LogTargetList = nil
+	diff := globalForDiff.Diff(*global)
 	if len(diff) != 0 {
 		err := c.haproxy.GlobalPushConfiguration(*newGlobal)
 		logger.Error(err)
